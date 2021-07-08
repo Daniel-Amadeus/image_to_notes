@@ -1,6 +1,6 @@
 import 'bootstrap';
-import { ImageToNotesConverter } from './ImageToNotesConverter';
+import { ImageToNotesInterface } from './ImageToNotesConverter';
 
 window.addEventListener('load', () => {
-    new ImageToNotesConverter();
+    new ImageToNotesInterface();
 })

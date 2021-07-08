@@ -1,6 +1,6 @@
 import Jimp from 'jimp';
 
-export class ImageToNotesConverter {
+export class ImageToNotesInterface {
     protected _image = new Image(100, 100);
     protected _canvas: HTMLCanvasElement;
     protected _svg = '';
