@@ -9,6 +9,8 @@ export class ImageToNotesInterface {
     protected _width = 148;
     protected _height = 210;
 
+    protected _padding = 3;
+
     protected _lineDistance = 2;
     protected _lineThickness = 0.25;
 
@@ -54,13 +56,18 @@ export class ImageToNotesInterface {
         const rowHeight = this._lineDistance * (this._linesPerRow - 1);
         const rowGap = this._lineDistance * (this._rowDistance + 1);
         const rowStep = rowHeight + rowGap;
+        const rowCount = (this._height - 2 * this._padding) / rowStep;
 
         console.log({ rowHeight, rowGap, rowStep });
 
-        for (let i = 0; i < this._height / rowStep; i++) {
-            const x1 = 0;
-            const x2 = this._width;
-            const rowY = i * rowStep;
+        for (let i = 0; i < rowCount; i++) {
+            const x1 = this._padding;
+            const x2 = this._width - this._padding;
+            const rowY = i * rowStep + this._padding;
+
+            lines += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />`;
+            lines += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />`;
+
             for (let l = 0; l < this._linesPerRow; l++) {
                 const y = rowY + l * this._lineDistance;
                 lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="${this._lineThickness}" />`;
