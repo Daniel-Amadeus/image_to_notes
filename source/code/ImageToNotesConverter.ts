@@ -75,7 +75,6 @@ export class ImageToNotesConverter {
 
     addDownloadButton(): void {
         this.addActionButton('download svg', () => {
-            console.log('not implemented yet :(');
             let element = document.createElement('a');
             element.setAttribute('href', 'data:text/plain;charset=utf-8,'
                 + encodeURIComponent(this._svg));
