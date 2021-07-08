@@ -33,7 +33,6 @@ export class ImageToNotesConverter {
         const ui = document.getElementById('ui')
 
         const wrapper = document.createElement('div');
-        wrapper.classList.add('fileInputWrapper');
         ui.appendChild(wrapper);
 
         const loadImageInput = document.createElement('input');
@@ -47,6 +46,9 @@ export class ImageToNotesConverter {
         button.value = 'load image';
         button.classList.add('btn');
         button.classList.add('btn-primary');
+        button.style.width = '100%';
+        button.style.overflow = 'hidden';
+        button.style.textOverflow = 'ellipsis';
 
         wrapper.appendChild(button);
         wrapper.appendChild(loadImageInput);
