@@ -18,6 +18,7 @@ export class ImageToNotesConverter {
         }
 
         this.addLoadImageButton();
+        this.addDownloadButton();
     }
 
     loadImage(path: string): void {
@@ -35,30 +36,16 @@ export class ImageToNotesConverter {
     }
 
     addLoadImageButton(): void {
-        const ui = document.getElementById('ui')
-
-        const wrapper = document.createElement('div');
-        ui.appendChild(wrapper);
-
         const loadImageInput = document.createElement('input');
         loadImageInput.type = 'file';
         loadImageInput.accept = '.png';
         loadImageInput.multiple = false;
-        loadImageInput.classList.add('d-none')
+        loadImageInput.classList.add('d-none');
 
-        const button = document.createElement('input') as HTMLButtonElement;
-        button.type = 'button';
-        button.value = 'load image';
-        button.classList.add('btn');
-        button.classList.add('btn-primary');
-        button.style.width = '100%';
-        button.style.overflow = 'hidden';
-        button.style.textOverflow = 'ellipsis';
+        const button = this.addActionButton('load image', () => loadImageInput.click());
 
-        wrapper.appendChild(button);
-        wrapper.appendChild(loadImageInput);
+        button.parentElement.appendChild(loadImageInput);
 
-        button.onclick = () => loadImageInput.click();
         loadImageInput.onchange = () => {
             button.value = Array.from(loadImageInput.files)
                 .map((file) => file.name)
@@ -77,5 +64,32 @@ export class ImageToNotesConverter {
             }
             reader.readAsDataURL(file);
         }
+    }
+
+    addDownloadButton(): void {
+        this.addActionButton('download svg', () => console.log('not implemented yet :('))
+    }
+
+    addActionButton(text: string, onclick: () => void): HTMLButtonElement {
+        const ui = document.getElementById('ui');
+
+        const wrapper = document.createElement('div');
+        ui.appendChild(wrapper);
+
+        const button = document.createElement('input') as HTMLButtonElement;
+        button.type = 'button';
+        button.value = text;
+        button.classList.add('btn');
+        button.classList.add('btn-primary');
+        button.style.width = '100%';
+        button.style.overflow = 'hidden';
+        button.style.textOverflow = 'ellipsis';
+        button.style.margin = '5px auto';
+
+        wrapper.appendChild(button);
+
+        button.onclick = onclick;
+
+        return button;
     }
 }
