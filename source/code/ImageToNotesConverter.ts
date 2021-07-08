@@ -74,7 +74,20 @@ export class ImageToNotesConverter {
     }
 
     addDownloadButton(): void {
-        this.addActionButton('download svg', () => console.log('not implemented yet :('))
+        this.addActionButton('download svg', () => {
+            console.log('not implemented yet :(');
+            let element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,'
+                + encodeURIComponent(this._svg));
+            element.setAttribute('download', 'notes.svg');
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        });
     }
 
     addActionButton(text: string, onclick: () => void): HTMLButtonElement {
