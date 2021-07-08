@@ -12,7 +12,7 @@ export class ImageToNotesConverter {
             this.canvas.width = this.canvas.clientWidth;
             this.canvas.height = this.canvas.clientHeight;
             context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            context.imageSmoothingEnabled = false;
+            context.imageSmoothingEnabled = true;
             context.drawImage(this.image, 0, 0)
         }
 
