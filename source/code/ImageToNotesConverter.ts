@@ -3,6 +3,7 @@ import Jimp from 'jimp';
 export class ImageToNotesConverter {
     protected image = new Image(100, 100);
     protected canvas: HTMLCanvasElement;
+    protected svg = '';
 
     constructor() {
         this.canvas = document.getElementById('imagePreview') as HTMLCanvasElement;
@@ -27,6 +28,10 @@ export class ImageToNotesConverter {
                 this.image.src = src;
             })
         })
+    }
+
+    generateSvg(): void {
+        this.svg = '<svg></svg>';
     }
 
     addLoadImageButton(): void {
