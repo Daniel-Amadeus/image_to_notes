@@ -39,6 +39,7 @@ export class ImageToNotesInterface {
     constructor() {
         this._image = document.getElementById('imagePreview') as HTMLImageElement;
         this._image.style.width = '100%';
+        this._image.style.imageRendering = 'crisp-edges';
 
         this.addLoadImageButton();
         this.addDownloadButton();
@@ -50,6 +51,7 @@ export class ImageToNotesInterface {
             const previewImage = new Jimp(img);
             previewImage.cover(this._width, this._height,
                 undefined, Jimp.RESIZE_BICUBIC);
+            this.dither(previewImage);
             previewImage.getBase64(Jimp.MIME_PNG, (err, src) => {
                 this._image.src = src;
             });
@@ -69,6 +71,14 @@ export class ImageToNotesInterface {
         }
     }
 
+    getClosestValue(value: number, steps: number): number {
+        let v = value * (steps - 1);
+        v += 0.5;
+        v = Math.floor(v);
+        v = v / (steps - 1);
+        return v;
+    }
+
     dither(img: Jimp): void {
         this.weightedGray(img);
         const values: number[] = [];
@@ -83,7 +93,7 @@ export class ImageToNotesInterface {
         for (let y = 0; y < img.getHeight(); y++) {
             for (let x = 0; x < img.getWidth(); x++) {
                 const value = values[x + y * img.getWidth()];
-                const newValue = value > 0.5 ? 1.0 : 0.0;
+                const newValue = this.getClosestValue(value, 3)
                 const error = value - newValue;
 
                 values[(x + 1) + (y + 0) * img.getWidth()]
@@ -125,7 +135,8 @@ export class ImageToNotesInterface {
 
         let defs = `<defs>
     <path id="clef" fill="black" stroke="none" transform="translate(0 ${clef.offsetY * this._lineDistance}) scale(${clef.height * this._lineDistance})" d="${clef.path}" />
-    <path id="quarterNote" fill="black" stroke="none" d="${this._wholeNotePath}" />
+    <path id="quarterNote" fill="black" stroke="none" d="${this._quarterNotePath}" />
+    <path id="wholeNote" fill="black" stroke="none" d="${this._wholeNotePath}" />
 </defs>`;
 
         let lines = '';
@@ -161,9 +172,11 @@ export class ImageToNotesInterface {
                     const px = x / this._lineDistance;
                     const py = y / this._lineDistance;
                     const pixel = Jimp.intToRGBA(img.getPixelColor(px, py));
-                    if (pixel.r < 128) {
-                        // lines += `<circle cx="${x}" cy="${y}" r="${this._lineDistance / 2}" fill="black" />`;
+                    const value = (pixel.r / 255.0) * 2;
+                    if (value < 1.0) {
                         lines += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
+                    } else if (value < 2.0) {
+                        lines += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
                     }
                 }
             }
