@@ -5,9 +5,15 @@ export class ImageToNotesInterface {
     protected _canvas: HTMLCanvasElement;
     protected _svg = '';
 
-    // A5
-    protected _width = 148; // mm
-    protected _height = 210; // mm
+    // A5 - all measurements in mm
+    protected _width = 148;
+    protected _height = 210;
+
+    protected _lineDistance = 2;
+    protected _lineThickness = 0.25;
+
+    protected _linesPerRow = 5;
+    protected _rowDistance = 2;
 
     constructor() {
         this._canvas = document.getElementById('imagePreview') as HTMLCanvasElement;
@@ -37,10 +43,31 @@ export class ImageToNotesInterface {
     }
 
     generateSvg(): void {
-        this._svg = `<?xml version="1.0" encoding="UTF-8"?>
+        const svgStart = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${this._width}mm" height="${this._height}mm" viewBox="0 0 ${this._width} ${this._height}">
     <rect width="100%" height="100%" fill="white" />
-</svg>`;
+`;
+        const svgEnd = '</svg>';
+
+        let lines = '';
+
+        const rowHeight = this._lineDistance * (this._linesPerRow - 1);
+        const rowGap = this._lineDistance * (this._rowDistance + 1);
+        const rowStep = rowHeight + rowGap;
+
+        console.log({ rowHeight, rowGap, rowStep });
+
+        for (let i = 0; i < this._height / rowStep; i++) {
+            const x1 = 0;
+            const x2 = this._width;
+            const rowY = i * rowStep;
+            for (let l = 0; l < this._linesPerRow; l++) {
+                const y = rowY + l * this._lineDistance;
+                lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="${this._lineThickness}" />`;
+            }
+        }
+
+        this._svg = svgStart + lines + svgEnd;
 
 
         const svgPreview = document.getElementById('svgPreview');
