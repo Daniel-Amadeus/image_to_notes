@@ -1,20 +1,20 @@
 import Jimp from 'jimp';
 
 export class ImageToNotesConverter {
-    protected image = new Image(100, 100);
-    protected canvas: HTMLCanvasElement;
-    protected svg = '';
+    protected _image = new Image(100, 100);
+    protected _canvas: HTMLCanvasElement;
+    protected _svg = '';
 
     constructor() {
-        this.canvas = document.getElementById('imagePreview') as HTMLCanvasElement;
-        const context = this.canvas.getContext('2d');
+        this._canvas = document.getElementById('imagePreview') as HTMLCanvasElement;
+        const context = this._canvas.getContext('2d');
 
-        this.image.onload = () => {
-            this.canvas.width = this.canvas.clientWidth;
-            this.canvas.height = this.canvas.clientHeight;
-            context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this._image.onload = () => {
+            this._canvas.width = this._canvas.clientWidth;
+            this._canvas.height = this._canvas.clientHeight;
+            context.fillRect(0, 0, this._canvas.width, this._canvas.height);
             context.imageSmoothingEnabled = true;
-            context.drawImage(this.image, 0, 0)
+            context.drawImage(this._image, 0, 0)
         }
 
         this.addLoadImageButton();
@@ -23,23 +23,23 @@ export class ImageToNotesConverter {
 
     loadImage(path: string): void {
         Jimp.read(path).then((img) => {
-            img.cover(this.canvas.clientWidth, this.canvas.clientHeight,
+            img.cover(this._canvas.clientWidth, this._canvas.clientHeight,
                 undefined, Jimp.RESIZE_BICUBIC);
             img.getBase64(Jimp.MIME_PNG, (err, src) => {
-                this.image.src = src;
+                this._image.src = src;
             });
             this.generateSvg();
         })
     }
 
     generateSvg(): void {
-        this.svg = `<?xml version="1.0" encoding="UTF-8"?>
+        this._svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg>
-    <rect width="100%" height="100%" fill="red" />
+    <rect width="100%" height="100%" fill="white" />
 </svg>`;
         const svgPreview = document.getElementById('svgPreview');
-        svgPreview.innerHTML = this.svg;
-        console.log(this.svg);
+        svgPreview.innerHTML = this._svg;
+        console.log(this._svg);
     }
 
     addLoadImageButton(): void {
