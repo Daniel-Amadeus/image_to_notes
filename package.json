@@ -27,6 +27,7 @@
     "bootstrap": "^5.0.2",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.3.2",
+    "jimp": "^0.13.0",
     "popper.js": "^1.16.1",
     "pug": "^3.0.2",
     "pug-loader": "^2.4.0",
