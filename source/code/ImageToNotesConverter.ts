@@ -27,12 +27,19 @@ export class ImageToNotesConverter {
                 undefined, Jimp.RESIZE_BICUBIC);
             img.getBase64(Jimp.MIME_PNG, (err, src) => {
                 this.image.src = src;
-            })
+            });
+            this.generateSvg();
         })
     }
 
     generateSvg(): void {
-        this.svg = '<svg></svg>';
+        this.svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg>
+    <rect width="100%" height="100%" fill="red" />
+</svg>`;
+        const svgPreview = document.getElementById('svgPreview');
+        svgPreview.innerHTML = this.svg;
+        console.log(this.svg);
     }
 
     addLoadImageButton(): void {
