@@ -5,6 +5,10 @@ export class ImageToNotesInterface {
     protected _canvas: HTMLCanvasElement;
     protected _svg = '';
 
+    // A5
+    protected _width = 148; // mm
+    protected _height = 210; // mm
+
     constructor() {
         this._canvas = document.getElementById('imagePreview') as HTMLCanvasElement;
         const context = this._canvas.getContext('2d');
@@ -34,11 +38,17 @@ export class ImageToNotesInterface {
 
     generateSvg(): void {
         this._svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg>
+<svg width="${this._width}mm" height="${this._height}mm" viewBox="0 0 ${this._width} ${this._height}">
     <rect width="100%" height="100%" fill="white" />
 </svg>`;
+
+
         const svgPreview = document.getElementById('svgPreview');
         svgPreview.innerHTML = this._svg;
+        const svgElement = svgPreview.getElementsByTagName('svg')[0];
+        console.log(svgElement);
+        svgElement.style.width = '100%';
+        svgElement.style.height = '100%';
         console.log(this._svg);
     }
 
