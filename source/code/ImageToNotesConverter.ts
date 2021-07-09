@@ -11,12 +11,13 @@ export class ImageToNotesInterface {
 
     protected _padding = 3;
 
-    protected _lineDistance = 2;
+    protected _lineDistance = 1.5;
     protected _lineThickness = 0.25;
 
     protected _linesPerRow = 5;
     protected _rowDistance = 2;
     protected _clefWidth = 4;
+    protected _noteDistance = 1.5;
 
     protected _clefs = [
         {
@@ -147,6 +148,7 @@ export class ImageToNotesInterface {
 
         img.cover(this._width / this._lineDistance, this._height / this._lineDistance,
             undefined, Jimp.RESIZE_BICUBIC);
+        img.resize(img.getWidth() / this._noteDistance, img.getHeight());
 
         this.dither(img);
 
@@ -165,11 +167,11 @@ export class ImageToNotesInterface {
                 lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
 
                 for (let i = 0; i < img.getWidth(); i++) {
-                    const x = this._padding + i * this._lineDistance + this._clefWidth * this._lineDistance;
+                    const x = this._padding + i * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
                     if (x >= x2) {
                         break;
                     }
-                    const px = x / this._lineDistance;
+                    const px = x / (this._lineDistance * this._noteDistance);
                     const py = y / this._lineDistance;
                     const pixel = Jimp.intToRGBA(img.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
