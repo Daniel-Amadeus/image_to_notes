@@ -44,6 +44,24 @@ export class ImageToNotesInterface {
 
         this.addLoadImageButton();
         this.addDownloadButton();
+
+        const ui = document.getElementById('ui');
+
+        const lineDistanceInput = document.createElement('input');
+        ui.appendChild(lineDistanceInput);
+        lineDistanceInput.className = 'form-control'
+        lineDistanceInput.type = 'number';
+        lineDistanceInput.min = String(0);
+        lineDistanceInput.max = String(5);
+        lineDistanceInput.step = String(0.1);
+        lineDistanceInput.value = String(this._lineDistance);
+
+        lineDistanceInput.addEventListener('change', (event) => {
+            const value = (event.target as HTMLInputElement).value;
+            this._lineDistance = parseFloat(value);
+            this.generateSvg();
+        })
+
     }
 
     loadImage(path: string): void {
@@ -130,7 +148,9 @@ export class ImageToNotesInterface {
         const values: number[] = [];
         for (let y = 0; y < rowImg.getHeight(); y++) {
             for (let x = 0; x < rowImg.getWidth(); x++) {
-                const color = Jimp.intToRGBA(rowImg.getPixelColor(x, y));
+                // console.log(rowImg.getWidth(), rowImg.getHeight(), x, y);
+                const pixel = rowImg.getPixelColor(x, y);
+                const color = Jimp.intToRGBA(pixel);
                 const value = color.r / 255.0;
                 values[x + y * rowImg.getWidth()] = value;
             }
