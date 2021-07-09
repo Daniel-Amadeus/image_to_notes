@@ -120,6 +120,61 @@ export class ImageToNotesInterface {
         }
     }
 
+    ditherRow(img: Jimp, y: number): Jimp {
+        const rowImg = new Jimp(img);
+        this.weightedGray(rowImg);
+        rowImg.crop(0, y, rowImg.getWidth(), 5);
+        const averageImage = new Jimp(rowImg);
+        averageImage.resize(averageImage.getWidth(), 1, Jimp.RESIZE_BICUBIC);
+
+        const values: number[] = [];
+        for (let y = 0; y < rowImg.getHeight(); y++) {
+            for (let x = 0; x < rowImg.getWidth(); x++) {
+                const color = Jimp.intToRGBA(rowImg.getPixelColor(x, y));
+                const value = color.r / 255.0;
+                values[x + y * rowImg.getWidth()] = value;
+            }
+        }
+
+        for (let y = 0; y < rowImg.getHeight(); y++) {
+            for (let x = 0; x < rowImg.getWidth(); x++) {
+                const value = values[x + y * rowImg.getWidth()];
+
+                const averagePixel = averageImage.getPixelColor(x, 0);
+                const averageValue = Jimp.intToRGBA(averagePixel).r / 255.0;
+
+                const minValue = averageValue < 0.5 ? 0.0 : 0.5;
+                const maxValue = 1.0;
+
+                const newValue = Math.abs(value - minValue) < Math.abs(value - maxValue) ? minValue : maxValue;
+
+                const error = value - newValue;
+
+                values[(x + 1) + (y + 0) * rowImg.getWidth()]
+                    += error * (7 / 16);
+                values[(x - 1) + (y + 1) * rowImg.getWidth()]
+                    += error * (3 / 16);
+                values[(x + 0) + (y + 1) * rowImg.getWidth()]
+                    += error * (5 / 16);
+                values[(x + 1) + (y + 1) * rowImg.getWidth()]
+                    += error * (1 / 16);
+
+                values[x + y * rowImg.getWidth()] = newValue;
+            }
+        }
+
+        for (let y = 0; y < rowImg.getHeight(); y++) {
+            for (let x = 0; x < rowImg.getWidth(); x++) {
+                const value = values[x + y * rowImg.getWidth()] * 255;
+
+                rowImg.setPixelColor(
+                    Jimp.rgbaToInt(value, value, value, 255, undefined), x, y);
+            }
+        }
+
+        return rowImg;
+    }
+
     generateSvg(): void {
         const clef = this._clefs[this._selectedClefIndex];
 
@@ -148,14 +203,16 @@ export class ImageToNotesInterface {
 
         img.cover(this._width / this._lineDistance, this._height / this._lineDistance,
             undefined, Jimp.RESIZE_BICUBIC);
-        img.resize(img.getWidth() / this._noteDistance, img.getHeight());
+        img.resize(img.getWidth() / this._noteDistance, img.getHeight(), Jimp.RESIZE_BICUBIC);
 
-        this.dither(img);
+        // this.dither(img);
 
         for (let r = 0; r < rowCount; r++) {
             const x1 = this._padding;
             const x2 = this._width - this._padding;
             const rowY = r * rowStep + this._padding;
+
+            const rowImg = this.ditherRow(img, rowY / this._lineDistance);
 
             lines += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
             lines += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
@@ -166,14 +223,14 @@ export class ImageToNotesInterface {
                 const y = rowY + l * this._lineDistance;
                 lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
 
-                for (let i = 0; i < img.getWidth(); i++) {
+                for (let i = 0; i < rowImg.getWidth(); i++) {
                     const x = this._padding + i * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
                     if (x >= x2) {
                         break;
                     }
                     const px = x / (this._lineDistance * this._noteDistance);
-                    const py = y / this._lineDistance;
-                    const pixel = Jimp.intToRGBA(img.getPixelColor(px, py));
+                    const py = l;
+                    const pixel = Jimp.intToRGBA(rowImg.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
                     if (value < 1.0) {
                         lines += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
