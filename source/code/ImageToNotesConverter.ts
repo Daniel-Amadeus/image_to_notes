@@ -215,7 +215,7 @@ export class ImageToNotesInterface {
     <path id="wholeNote" fill="black" stroke="none" d="${this._wholeNotePath}" />
 </defs>`;
 
-        let lines = '';
+        let elements = '';
 
         console.log({ rowHeight, rowGap, rowStep });
 
@@ -234,14 +234,14 @@ export class ImageToNotesInterface {
 
             const rowImg = this.ditherRow(img, rowY / this._lineDistance);
 
-            lines += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
-            lines += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
+            elements += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            elements += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
 
-            lines += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
+            elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
             for (let l = 0; l < this._linesPerRow; l++) {
                 const y = rowY + l * this._lineDistance;
-                lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="${this._lineThickness}" />\n`;
+                elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
 
                 for (let i = 0; i < rowImg.getWidth(); i++) {
                     const x = this._padding + i * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
@@ -253,15 +253,15 @@ export class ImageToNotesInterface {
                     const pixel = Jimp.intToRGBA(rowImg.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
                     if (value < 1.0) {
-                        lines += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
+                        elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
                     } else if (value < 2.0) {
-                        lines += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
+                        elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
                     }
                 }
             }
         }
 
-        this._svg = svgStart + defs + lines + svgEnd;
+        this._svg = svgStart + defs + elements + svgEnd;
 
 
         const svgPreview = document.getElementById('svgPreview');
