@@ -239,17 +239,21 @@ export class ImageToNotesInterface {
 
             elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
-            for (let l = 0; l < this._linesPerRow; l++) {
-                const y = rowY + l * this._lineDistance;
+            for (let line = 0; line < this._linesPerRow; line++) {
+                const y = rowY + line * this._lineDistance;
                 elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            }
 
-                for (let i = 0; i < rowImg.getWidth(); i++) {
-                    const x = this._padding + i * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+            for (let column = 0; column < rowImg.getWidth(); column++) {
+                for (let line = 0; line < this._linesPerRow; line++) {
+                    const y = rowY + line * this._lineDistance;
+
+                    const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
                     if (x >= x2) {
                         break;
                     }
                     const px = x / (this._lineDistance * this._noteDistance);
-                    const py = l;
+                    const py = line;
                     const pixel = Jimp.intToRGBA(rowImg.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
                     if (value < 1.0) {
