@@ -22,7 +22,7 @@ export class ImageToNotesInterface {
     protected _noteDistance = 2.0;
     protected _noteWidth = 1.3;
 
-    protected _deleteFactor = 0.6;
+    protected _deleteFactor = 0.4;
 
     protected _useHalfSteps = true;
 
@@ -72,6 +72,15 @@ export class ImageToNotesInterface {
         deleteFactorInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
             this._deleteFactor = parseFloat(value);
+            this.generateSvg();
+        });
+
+        const useHalfStepInput = controls.createSelectListInput(
+            'use half step notes', ['yes', 'no']);
+        useHalfStepInput.selectedIndex = this._useHalfSteps ? 0 : 1;
+
+        useHalfStepInput.addEventListener('change', (event) => {
+            this._useHalfSteps = useHalfStepInput.selectedIndex == 0;
             this.generateSvg();
         });
 
