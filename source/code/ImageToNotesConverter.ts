@@ -17,7 +17,8 @@ export class ImageToNotesInterface {
     protected _linesPerRow = 5;
     protected _rowDistance = 2;
     protected _clefWidth = 4;
-    protected _noteDistance = 1.5;
+    protected _noteDistance = 2.0;
+    protected _noteWidth = 1.3;
 
     protected _clefs = [
         {
@@ -239,24 +240,54 @@ export class ImageToNotesInterface {
 
             elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
-            for (let l = 0; l < this._linesPerRow; l++) {
-                const y = rowY + l * this._lineDistance;
+            for (let line = 0; line < this._linesPerRow; line++) {
+                const y = rowY + line * this._lineDistance;
                 elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            }
 
-                for (let i = 0; i < rowImg.getWidth(); i++) {
-                    const x = this._padding + i * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+            for (let column = 0; column < rowImg.getWidth(); column++) {
+                const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+
+                let minPos = this._linesPerRow - 1;
+                let maxPos = 0;
+                for (let line = 0; line < this._linesPerRow; line++) {
+                    const y = rowY + line * this._lineDistance;
+
                     if (x >= x2) {
                         break;
                     }
                     const px = x / (this._lineDistance * this._noteDistance);
-                    const py = l;
+                    const py = line;
                     const pixel = Jimp.intToRGBA(rowImg.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
-                    if (value < 1.0) {
-                        elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
-                    } else if (value < 2.0) {
-                        elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
+                    if (value < 2.0) {
+                        minPos = Math.min(minPos, line);
+                        maxPos = Math.max(maxPos, line);
+                        if (value < 1.0) {
+                            elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
+                        } else {
+                            elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
+                        }
                     }
+                }
+
+                if (maxPos >= minPos) {
+                    let noteLineX = x;
+                    const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
+                    if (minPos < this._linesPerRow - 1 - maxPos) {
+                        maxPos += 3;
+                        maxPos = Math.min(maxPos, this._linesPerRow);
+                        noteLineX -= noteLineXOffset;
+                    } else {
+                        minPos -= 3;
+                        minPos = Math.max(minPos, -1);
+                        noteLineX += noteLineXOffset;
+                    }
+
+                    let noteLineStart = rowY + minPos * this._lineDistance;
+                    let noteLineEnd = rowY + maxPos * this._lineDistance;
+
+                    elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                 }
             }
         }
