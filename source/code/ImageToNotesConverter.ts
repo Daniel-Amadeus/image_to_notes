@@ -1,4 +1,5 @@
 import Jimp from 'jimp';
+import { Controls } from './uiHelper';
 
 export class ImageToNotesInterface {
     protected _image = new Image(100, 100);
@@ -15,10 +16,19 @@ export class ImageToNotesInterface {
     protected _lineThickness = 0.25;
 
     protected _linesPerRow = 5;
+    protected _notePlacesPerRow = (this._linesPerRow * 2) - 1;
     protected _rowDistance = 2;
     protected _clefWidth = 4;
     protected _noteDistance = 2.0;
     protected _noteWidth = 1.3;
+
+    protected _useHalfSteps = true;
+
+    protected _baseKeepFactor = 1.0;
+    protected _halfKeepFactorWithHalfSteps = true;
+    protected _keepFactor =
+        this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+
 
     protected _clefs = [
         {
@@ -43,25 +53,51 @@ export class ImageToNotesInterface {
         this._image.style.width = '100%';
         this._image.style.imageRendering = 'crisp-edges';
 
-        this.addLoadImageButton();
-        this.addDownloadButton();
 
         const ui = document.getElementById('ui');
 
-        const lineDistanceInput = document.createElement('input');
-        ui.appendChild(lineDistanceInput);
-        lineDistanceInput.className = 'form-control'
-        lineDistanceInput.type = 'number';
-        lineDistanceInput.min = String(0);
-        lineDistanceInput.max = String(5);
-        lineDistanceInput.step = String(0.1);
-        lineDistanceInput.value = String(this._lineDistance);
+        this.addLoadImageButton();
+        this.addDownloadButton();
+
+        const controls = new Controls(ui);
+
+        const lineDistanceInput = controls.createNumberInput(
+            'line distance', null, this._lineDistance, null, 0, 5, 0.1);
 
         lineDistanceInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
             this._lineDistance = parseFloat(value);
             this.generateSvg();
-        })
+        });
+
+        const deleteFactorInput = controls.createNumberInput(
+            'base keep factor', null, this._baseKeepFactor, null, 0, 1, 0.05);
+
+        deleteFactorInput.addEventListener('change', (event) => {
+            const value = (event.target as HTMLInputElement).value;
+            this._baseKeepFactor = parseFloat(value);
+            this.generateSvg();
+        });
+
+        const useHalfStepInput = controls.createSelectListInput(
+            'use half step notes', ['yes', 'no']);
+        useHalfStepInput.selectedIndex = this._useHalfSteps ? 0 : 1;
+
+        useHalfStepInput.addEventListener('change', (event) => {
+            this._useHalfSteps = useHalfStepInput.selectedIndex == 0;
+            this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+            this.generateSvg();
+        });
+
+        const halfKeepFactorInput = controls.createSelectListInput(
+            'half keep factor with half steps', ['yes', 'no']);
+        halfKeepFactorInput.selectedIndex = this._halfKeepFactorWithHalfSteps ? 0 : 1;
+
+        halfKeepFactorInput.addEventListener('change', (event) => {
+            this._halfKeepFactorWithHalfSteps = halfKeepFactorInput.selectedIndex == 0;
+            this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+            this.generateSvg();
+        });
 
     }
 
@@ -142,7 +178,7 @@ export class ImageToNotesInterface {
     ditherRow(img: Jimp, y: number): Jimp {
         const rowImg = new Jimp(img);
         this.weightedGray(rowImg);
-        rowImg.crop(0, y, rowImg.getWidth(), 5);
+        rowImg.crop(0, y * 2, rowImg.getWidth(), this._notePlacesPerRow);
         const averageImage = new Jimp(rowImg);
         averageImage.resize(averageImage.getWidth(), 1, Jimp.RESIZE_BICUBIC);
 
@@ -222,9 +258,15 @@ export class ImageToNotesInterface {
 
         const img = new Jimp(this._originalImage);
 
-        img.cover(this._width / this._lineDistance, this._height / this._lineDistance,
-            undefined, Jimp.RESIZE_BICUBIC);
-        img.resize(img.getWidth() / this._noteDistance, img.getHeight(), Jimp.RESIZE_BICUBIC);
+        img.cover(
+            (this._width * 2.0) / this._lineDistance,
+            (this._height * 2.0) / this._lineDistance,
+            undefined, Jimp.RESIZE_BICUBIC
+        );
+        img.resize(
+            img.getWidth() / (this._noteDistance * 2.0),
+            img.getHeight(), Jimp.RESIZE_BICUBIC
+        );
 
         // this.dither(img);
 
@@ -248,10 +290,16 @@ export class ImageToNotesInterface {
             for (let column = 0; column < rowImg.getWidth(); column++) {
                 const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
 
-                let minPos = this._linesPerRow - 1;
+                let minPos = this._notePlacesPerRow - 1;
                 let maxPos = 0;
-                for (let line = 0; line < this._linesPerRow; line++) {
-                    const y = rowY + line * this._lineDistance;
+                for (let line = 0; line < this._notePlacesPerRow; line++) {
+                    if (Math.random() > this._keepFactor) {
+                        continue;
+                    }
+                    if (!this._useHalfSteps && line % 2 != 0) {
+                        continue;
+                    }
+                    const y = rowY + line * this._lineDistance * 0.5;
 
                     if (x >= x2) {
                         break;
@@ -274,18 +322,18 @@ export class ImageToNotesInterface {
                 if (maxPos >= minPos) {
                     let noteLineX = x;
                     const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
-                    if (minPos < this._linesPerRow - 1 - maxPos) {
-                        maxPos += 3;
-                        maxPos = Math.min(maxPos, this._linesPerRow);
+                    if (minPos < this._notePlacesPerRow - 1 - maxPos) {
+                        maxPos += 6;
+                        maxPos = Math.min(maxPos, this._notePlacesPerRow + 1);
                         noteLineX -= noteLineXOffset;
                     } else {
-                        minPos -= 3;
-                        minPos = Math.max(minPos, -1);
+                        minPos -= 6;
+                        minPos = Math.max(minPos, -2);
                         noteLineX += noteLineXOffset;
                     }
 
-                    let noteLineStart = rowY + minPos * this._lineDistance;
-                    let noteLineEnd = rowY + maxPos * this._lineDistance;
+                    let noteLineStart = rowY + minPos * this._lineDistance * 0.5;
+                    let noteLineEnd = rowY + maxPos * this._lineDistance * 0.5;
 
                     elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                 }
