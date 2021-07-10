@@ -272,10 +272,18 @@ export class ImageToNotesInterface {
                 }
 
                 if (maxPos >= minPos) {
-                    minPos -= 3;
-                    minPos = Math.max(minPos, -1);
+                    let noteLineX = x;
+                    const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
+                    if (minPos < this._linesPerRow - 1 - maxPos) {
+                        maxPos += 3;
+                        maxPos = Math.min(maxPos, this._linesPerRow);
+                        noteLineX -= noteLineXOffset;
+                    } else {
+                        minPos -= 3;
+                        minPos = Math.max(minPos, -1);
+                        noteLineX += noteLineXOffset;
+                    }
 
-                    const noteLineX = x + this._noteWidth * this._lineDistance * 0.5;
                     let noteLineStart = rowY + minPos * this._lineDistance;
                     let noteLineEnd = rowY + maxPos * this._lineDistance;
 
