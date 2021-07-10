@@ -22,9 +22,13 @@ export class ImageToNotesInterface {
     protected _noteDistance = 2.0;
     protected _noteWidth = 1.3;
 
-    protected _keepFactor = 0.4;
-
     protected _useHalfSteps = true;
+
+    protected _baseKeepFactor = 1.0;
+    protected _halfKeepFactorWithHalfSteps = true;
+    protected _keepFactor =
+        this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+
 
     protected _clefs = [
         {
@@ -67,11 +71,11 @@ export class ImageToNotesInterface {
         });
 
         const deleteFactorInput = controls.createNumberInput(
-            'keep factor', null, this._keepFactor, null, 0, 1, 0.05);
+            'base keep factor', null, this._baseKeepFactor, null, 0, 1, 0.05);
 
         deleteFactorInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
-            this._keepFactor = parseFloat(value);
+            this._baseKeepFactor = parseFloat(value);
             this.generateSvg();
         });
 
@@ -81,6 +85,17 @@ export class ImageToNotesInterface {
 
         useHalfStepInput.addEventListener('change', (event) => {
             this._useHalfSteps = useHalfStepInput.selectedIndex == 0;
+            this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+            this.generateSvg();
+        });
+
+        const halfKeepFactorInput = controls.createSelectListInput(
+            'half keep factor with half steps', ['yes', 'no']);
+        halfKeepFactorInput.selectedIndex = this._halfKeepFactorWithHalfSteps ? 0 : 1;
+
+        halfKeepFactorInput.addEventListener('change', (event) => {
+            this._halfKeepFactorWithHalfSteps = halfKeepFactorInput.selectedIndex == 0;
+            this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
             this.generateSvg();
         });
 
