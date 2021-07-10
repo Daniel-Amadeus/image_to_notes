@@ -1,4 +1,5 @@
 import Jimp from 'jimp';
+import { Controls } from './uiHelper';
 
 export class ImageToNotesInterface {
     protected _image = new Image(100, 100);
@@ -48,19 +49,17 @@ export class ImageToNotesInterface {
         this._image.style.width = '100%';
         this._image.style.imageRendering = 'crisp-edges';
 
-        this.addLoadImageButton();
-        this.addDownloadButton();
 
         const ui = document.getElementById('ui');
 
-        const lineDistanceInput = document.createElement('input');
-        ui.appendChild(lineDistanceInput);
-        lineDistanceInput.className = 'form-control'
-        lineDistanceInput.type = 'number';
-        lineDistanceInput.min = String(0);
-        lineDistanceInput.max = String(5);
-        lineDistanceInput.step = String(0.1);
-        lineDistanceInput.value = String(this._lineDistance);
+
+        this.addLoadImageButton();
+        this.addDownloadButton();
+
+        const controls = new Controls(ui);
+
+        const lineDistanceInput = controls.createNumberInput(
+            'line distance', null, this._lineDistance, null, 0, 5, 0.1);
 
         lineDistanceInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
