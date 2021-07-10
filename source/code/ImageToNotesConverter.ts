@@ -22,7 +22,7 @@ export class ImageToNotesInterface {
     protected _noteDistance = 2.0;
     protected _noteWidth = 1.3;
 
-    protected _deleteFactor = 0.4;
+    protected _keepFactor = 0.4;
 
     protected _useHalfSteps = true;
 
@@ -67,11 +67,11 @@ export class ImageToNotesInterface {
         });
 
         const deleteFactorInput = controls.createNumberInput(
-            'delete factor', null, this._deleteFactor, null, 0, 1, 0.05);
+            'keep factor', null, this._keepFactor, null, 0, 1, 0.05);
 
         deleteFactorInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
-            this._deleteFactor = parseFloat(value);
+            this._keepFactor = parseFloat(value);
             this.generateSvg();
         });
 
@@ -278,7 +278,7 @@ export class ImageToNotesInterface {
                 let minPos = this._notePlacesPerRow - 1;
                 let maxPos = 0;
                 for (let line = 0; line < this._notePlacesPerRow; line++) {
-                    if (Math.random() < this._deleteFactor) {
+                    if (Math.random() > this._keepFactor) {
                         continue;
                     }
                     if (!this._useHalfSteps && line % 2 != 0) {
