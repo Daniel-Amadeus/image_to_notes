@@ -21,6 +21,8 @@ export class ImageToNotesInterface {
     protected _noteDistance = 2.0;
     protected _noteWidth = 1.3;
 
+    protected _deleteFactor = 0.6;
+
     protected _useHalfSteps = true;
 
     protected _clefs = [
@@ -260,6 +262,9 @@ export class ImageToNotesInterface {
                 let minPos = this._notePlacesPerRow - 1;
                 let maxPos = 0;
                 for (let line = 0; line < this._notePlacesPerRow; line++) {
+                    if (Math.random() < this._deleteFactor) {
+                        continue;
+                    }
                     if (!this._useHalfSteps && line % 2 != 0) {
                         continue;
                     }
