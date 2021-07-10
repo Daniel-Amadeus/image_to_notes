@@ -52,7 +52,6 @@ export class ImageToNotesInterface {
 
         const ui = document.getElementById('ui');
 
-
         this.addLoadImageButton();
         this.addDownloadButton();
 
@@ -65,7 +64,16 @@ export class ImageToNotesInterface {
             const value = (event.target as HTMLInputElement).value;
             this._lineDistance = parseFloat(value);
             this.generateSvg();
-        })
+        });
+
+        const deleteFactorInput = controls.createNumberInput(
+            'delete factor', null, this._deleteFactor, null, 0, 1, 0.05);
+
+        deleteFactorInput.addEventListener('change', (event) => {
+            const value = (event.target as HTMLInputElement).value;
+            this._deleteFactor = parseFloat(value);
+            this.generateSvg();
+        });
 
     }
 
