@@ -367,13 +367,14 @@ export class ImageToNotesInterface {
             }
             // console.log(noteValues)
 
-            for (const barLinePlace of barLinePlaces) {
-                const x = this._padding + this._lineDistance * (barLinePlace * this._noteDistance + this._clefWidth + 0.5);
+            // for (const barLinePlace of barLinePlaces) {
+            //     const x = this._padding + this._lineDistance * (barLinePlace * this._noteDistance + this._clefWidth + 0.5);
 
-                elements += `<line x1="${x}" y1="${rowY}" x2="${x}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
-            }
+            //     elements += `<line x1="${x}" y1="${rowY}" x2="${x}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            // }
 
             // draw notes & bar lines
+            let placedNote = false;
             for (let column = 0; column < rowImage.getWidth(); column++) {
                 const x = this._padding + this._lineDistance * (column * this._noteDistance + this._clefWidth);
 
@@ -410,23 +411,32 @@ export class ImageToNotesInterface {
                 }
 
                 // draw note stem
-                if (noteValue > 0 && maxPos >= minPos) {
-                    let noteLineX = x;
-                    const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
-                    if (minPos < this._notePlacesPerRow - 1 - maxPos) {
-                        maxPos += 6;
-                        maxPos = Math.min(maxPos, this._notePlacesPerRow + 1);
-                        noteLineX -= noteLineXOffset;
-                    } else {
-                        minPos -= 6;
-                        minPos = Math.max(minPos, -2);
-                        noteLineX += noteLineXOffset;
+                if (maxPos >= minPos) {
+                    placedNote = true;
+                    if (noteValue > 0) {
+                        let noteLineX = x;
+                        const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
+                        if (minPos < this._notePlacesPerRow - 1 - maxPos) {
+                            maxPos += 6;
+                            maxPos = Math.min(maxPos, this._notePlacesPerRow + 1);
+                            noteLineX -= noteLineXOffset;
+                        } else {
+                            minPos -= 6;
+                            minPos = Math.max(minPos, -2);
+                            noteLineX += noteLineXOffset;
+                        }
+
+                        let noteLineStart = rowY + minPos * this._lineDistance * 0.5;
+                        let noteLineEnd = rowY + maxPos * this._lineDistance * 0.5;
+
+                        elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                     }
+                }
 
-                    let noteLineStart = rowY + minPos * this._lineDistance * 0.5;
-                    let noteLineEnd = rowY + maxPos * this._lineDistance * 0.5;
-
-                    elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+                if (placedNote && barLinePlaces.includes(column)) {
+                    const barLineX = x + this._noteDistance * this._lineDistance * 0.5;
+                    elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+                    placedNote = false;
                 }
             }
         }
