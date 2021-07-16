@@ -175,61 +175,90 @@ export class ImageToNotesInterface {
         }
     }
 
-    ditherRow(img: Jimp, y: number): Jimp {
-        const rowImg = new Jimp(img);
-        this.weightedGray(rowImg);
-        rowImg.crop(0, y * 2, rowImg.getWidth(), this._notePlacesPerRow);
-        const averageImage = new Jimp(rowImg);
+    ditherRow(img: Jimp, y: number): { rowImage: Jimp, averageImage: Jimp } {
+        const rowImage = new Jimp(img);
+        this.weightedGray(rowImage);
+        rowImage.crop(0, y * 2, rowImage.getWidth(), this._notePlacesPerRow);
+        const averageImage = new Jimp(rowImage);
         averageImage.resize(averageImage.getWidth(), 1, Jimp.RESIZE_BICUBIC);
 
         const values: number[] = [];
-        for (let y = 0; y < rowImg.getHeight(); y++) {
-            for (let x = 0; x < rowImg.getWidth(); x++) {
+        for (let y = 0; y < rowImage.getHeight(); y++) {
+            for (let x = 0; x < rowImage.getWidth(); x++) {
                 // console.log(rowImg.getWidth(), rowImg.getHeight(), x, y);
-                const pixel = rowImg.getPixelColor(x, y);
+                const pixel = rowImage.getPixelColor(x, y);
                 const color = Jimp.intToRGBA(pixel);
                 const value = color.r / 255.0;
-                values[x + y * rowImg.getWidth()] = value;
+                values[x + y * rowImage.getWidth()] = value;
             }
         }
 
-        for (let y = 0; y < rowImg.getHeight(); y++) {
-            for (let x = 0; x < rowImg.getWidth(); x++) {
-                const value = values[x + y * rowImg.getWidth()];
+        let sawBlackNote = false;
+        let lastWasBlack = false;
+
+        const noteValues = [];
+
+        for (let x = 0; x < rowImage.getWidth(); x++) {
+            const averagePixel = averageImage.getPixelColor(x, 0);
+            const averageValue = Jimp.intToRGBA(averagePixel).r / 255.0;
+            // console.log(averageValue);
+
+            let value = 0.0;
+            if (averageValue < 0.5 || (sawBlackNote && !lastWasBlack)) {
+                value = 0.0;
+                sawBlackNote = true;
+                lastWasBlack = true;
+            } else {
+                value = 0.5;
+                lastWasBlack = false;
+            }
+
+            // console.log(value);
+
+            value *= 255.0;
+
+            averageImage.setPixelColor(
+                Jimp.rgbaToInt(value, value, value, 255, undefined), x, 0
+            )
+        }
+        for (let y = 0; y < rowImage.getHeight(); y++) {
+            for (let x = 0; x < rowImage.getWidth(); x++) {
+                const value = values[x + y * rowImage.getWidth()];
 
                 const averagePixel = averageImage.getPixelColor(x, 0);
                 const averageValue = Jimp.intToRGBA(averagePixel).r / 255.0;
 
                 const minValue = averageValue < 0.5 ? 0.0 : 0.5;
+                // console.log(minValue);
                 const maxValue = 1.0;
 
                 const newValue = Math.abs(value - minValue) < Math.abs(value - maxValue) ? minValue : maxValue;
 
                 const error = value - newValue;
 
-                values[(x + 1) + (y + 0) * rowImg.getWidth()]
+                values[(x + 1) + (y + 0) * rowImage.getWidth()]
                     += error * (7 / 16);
-                values[(x - 1) + (y + 1) * rowImg.getWidth()]
+                values[(x - 1) + (y + 1) * rowImage.getWidth()]
                     += error * (3 / 16);
-                values[(x + 0) + (y + 1) * rowImg.getWidth()]
+                values[(x + 0) + (y + 1) * rowImage.getWidth()]
                     += error * (5 / 16);
-                values[(x + 1) + (y + 1) * rowImg.getWidth()]
+                values[(x + 1) + (y + 1) * rowImage.getWidth()]
                     += error * (1 / 16);
 
-                values[x + y * rowImg.getWidth()] = newValue;
+                values[x + y * rowImage.getWidth()] = newValue;
             }
         }
 
-        for (let y = 0; y < rowImg.getHeight(); y++) {
-            for (let x = 0; x < rowImg.getWidth(); x++) {
-                const value = values[x + y * rowImg.getWidth()] * 255;
+        for (let y = 0; y < rowImage.getHeight(); y++) {
+            for (let x = 0; x < rowImage.getWidth(); x++) {
+                const value = values[x + y * rowImage.getWidth()] * 255;
 
-                rowImg.setPixelColor(
+                rowImage.setPixelColor(
                     Jimp.rgbaToInt(value, value, value, 255, undefined), x, y);
             }
         }
 
-        return rowImg;
+        return { rowImage, averageImage };
     }
 
     generateSvg(): void {
@@ -254,7 +283,7 @@ export class ImageToNotesInterface {
 
         let elements = '';
 
-        console.log({ rowHeight, rowGap, rowStep });
+        // console.log({ rowHeight, rowGap, rowStep });
 
         const img = new Jimp(this._originalImage);
 
@@ -271,27 +300,82 @@ export class ImageToNotesInterface {
         // this.dither(img);
 
         for (let r = 0; r < rowCount; r++) {
+            console.log('row')
             const x1 = this._padding;
             const x2 = this._width - this._padding;
             const rowY = r * rowStep + this._padding;
 
-            const rowImg = this.ditherRow(img, rowY / this._lineDistance);
+            const ditherResult = this.ditherRow(img, rowY / this._lineDistance);
+            const rowImage = ditherResult.rowImage;
+            const averageImage = ditherResult.averageImage;
 
             elements += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             elements += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
 
             elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
+            // draw horizontal lines
             for (let line = 0; line < this._linesPerRow; line++) {
                 const y = rowY + line * this._lineDistance;
                 elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             }
 
-            for (let column = 0; column < rowImg.getWidth(); column++) {
+            const notePatterns = [
+                [0],
+                [2, 1, 2],
+                [2, 2, 1],
+                [3, 3, 2, 1],
+                [2, 2, 2, 2]
+            ];
+
+            const patternMatch = (a1: Array<number>, a2: Array<number>) => {
+                if (a1.length != a2.length) {
+                    return false;
+                }
+                for (let i = 0; i < a1.length; i++) {
+                    if ((a1[i] < 2) != (a2[i] < 2)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            let noteValues: Array<number> = [];
+            let lastNotes: Array<number> = [];
+            let barLinePlaces = [];
+            for (let column = 0; column < averageImage.getWidth(); column++) {
                 const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+                const px = x / (this._lineDistance * this._noteDistance);
+                const py = 0;
+                const pixel = Jimp.intToRGBA(averageImage.getPixelColor(px, py));
+                const pixelValue = (pixel.r / 255.0);
+                let value = 0;
+                if (pixelValue < 0.5) {
+                    value = 2;
+                }
+                lastNotes.push(value);
+                const matchingPattern = notePatterns.find(element => patternMatch(element, lastNotes));
+                // console.log(lastNotes);
+                // console.log(matchingPattern);
+
+                if (matchingPattern) {
+                    lastNotes = [];
+                    barLinePlaces.push(column);
+                    noteValues = noteValues.concat(matchingPattern);
+                }
+
+            }
+            // console.log(noteValues)
+
+            // draw notes & bar lines
+            for (let column = 0; column < rowImage.getWidth(); column++) {
+                const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+
+                const noteValue = noteValues[column];
 
                 let minPos = this._notePlacesPerRow - 1;
                 let maxPos = 0;
+                // draw notes
                 for (let line = 0; line < this._notePlacesPerRow; line++) {
                     if (Math.random() > this._keepFactor) {
                         continue;
@@ -306,20 +390,21 @@ export class ImageToNotesInterface {
                     }
                     const px = x / (this._lineDistance * this._noteDistance);
                     const py = line;
-                    const pixel = Jimp.intToRGBA(rowImg.getPixelColor(px, py));
+                    const pixel = Jimp.intToRGBA(rowImage.getPixelColor(px, py));
                     const value = (pixel.r / 255.0) * 2;
                     if (value < 2.0) {
                         minPos = Math.min(minPos, line);
                         maxPos = Math.max(maxPos, line);
-                        if (value < 1.0) {
-                            elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
-                        } else {
+                        if (noteValue < 2) {
                             elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
+                        } else {
+                            elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
                         }
                     }
                 }
 
-                if (maxPos >= minPos) {
+                // draw note stem
+                if (noteValue > 0 && maxPos >= minPos) {
                     let noteLineX = x;
                     const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
                     if (minPos < this._notePlacesPerRow - 1 - maxPos) {
@@ -346,7 +431,7 @@ export class ImageToNotesInterface {
         const svgPreview = document.getElementById('svgPreview');
         svgPreview.innerHTML = this._svg;
         const svgElement = svgPreview.getElementsByTagName('svg')[0];
-        console.log(svgElement);
+        // console.log(svgElement);
         svgElement.style.width = '100%';
         svgElement.style.height = '100%';
     }
