@@ -408,7 +408,8 @@ export class ImageToNotesInterface {
                     if (noteValue > 0) {
                         let noteLineX = x;
                         const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
-                        if (minPos < this._notePlacesPerRow - 1 - maxPos) {
+                        const lineDown = minPos < this._notePlacesPerRow - 1 - maxPos;
+                        if (lineDown) {
                             maxPos += 6;
                             maxPos = Math.min(maxPos, this._notePlacesPerRow + 1);
                             noteLineX -= noteLineXOffset;
@@ -424,7 +425,7 @@ export class ImageToNotesInterface {
                         elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
 
                         if (noteValue == 3) {
-                            elements += `<use transform="translate(${noteLineX} ${noteLineStart}) scale(${this._lineDistance * 2.5})" xlink:href="#flag" />\n`;
+                            elements += `<use transform="translate(${noteLineX} ${lineDown ? noteLineEnd : noteLineStart}) scale(${this._lineDistance * 2.5}) scale(1 ${lineDown ? -1 : 1})" xlink:href="#flag" />\n`;
                             console.log(`placed flag at row ${r} & column ${column}`)
                         }
                     }
