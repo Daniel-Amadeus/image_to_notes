@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="0.58795834"
+   height="0.99999988"
+   viewBox="0 0 0.58795836 0.99999986"
+   version="1.1"
+   id="svg23251"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="eighth_rest.svg">
+  <defs
+     id="defs23245" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="126.71353"
+     inkscape:cx="-0.51092269"
+     inkscape:cy="0.70300639"
+     inkscape:document-units="px"
+     inkscape:current-layer="svg23251"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     units="px"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="1911"
+     inkscape:window-y="381"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata23248">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.174404"
+     d="m 0.294,0.08179987 c -0.11454303,0.10014798 -0.22006087,0.14986697 -0.3161238,0.14986697 -0.01307993,0 -0.02186225,-0.002803 -0.02728104,-0.008221 0.02317024,-0.0436092 0.03550272,-0.0817439 0.03550272,-0.11444149 C -0.01390212,0.03678943 -0.05687907,0 -0.14189883,0 c -0.0203673,0 -0.0396136,0.00411055 -0.0571781,0.01083691 -0.0168171,0.0054184 -0.0319525,0.01363945 -0.0463404,0.02453242 -0.0149485,0.009529 -0.0265336,0.02111328 -0.0355027,0.03542548 -0.009343,0.01289218 -0.01308,0.02724174 -0.01308,0.04359052 0,0.1076404 0.0687632,0.16077862 0.20711173,0.16077862 0.07418206,0 0.1696657,-0.0190767 0.28613336,-0.0572301 l -0.3542612,0.78206605 h 0.09268088 z m 0,0"
+     id="path23824" />
+</svg>
