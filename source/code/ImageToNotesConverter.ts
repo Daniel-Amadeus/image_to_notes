@@ -367,9 +367,15 @@ export class ImageToNotesInterface {
             }
             // console.log(noteValues)
 
+            for (const barLinePlace of barLinePlaces) {
+                const x = this._padding + this._lineDistance * (barLinePlace * this._noteDistance + this._clefWidth + 0.5);
+
+                elements += `<line x1="${x}" y1="${rowY}" x2="${x}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            }
+
             // draw notes & bar lines
             for (let column = 0; column < rowImage.getWidth(); column++) {
-                const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+                const x = this._padding + this._lineDistance * (column * this._noteDistance + this._clefWidth);
 
                 const noteValue = noteValues[column];
 
