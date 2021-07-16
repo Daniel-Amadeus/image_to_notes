@@ -29,6 +29,9 @@ export class ImageToNotesInterface {
     protected _keepFactor =
         this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
 
+    protected _useRests = true;
+    protected _useBarLines = true;
+
 
     protected _clefs = [
         {
@@ -123,6 +126,24 @@ export class ImageToNotesInterface {
         halfKeepFactorInput.addEventListener('change', (event) => {
             this._halfKeepFactorWithHalfSteps = halfKeepFactorInput.selectedIndex == 0;
             this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
+            this.generateSvg();
+        });
+
+        const useRestsInput = controls.createSelectListInput(
+            'use rests', ['yes', 'no']);
+        useRestsInput.selectedIndex = this._useRests ? 0 : 1;
+
+        useRestsInput.addEventListener('change', (event) => {
+            this._useRests = useRestsInput.selectedIndex == 0;
+            this.generateSvg();
+        });
+
+        const useBarLinesInput = controls.createSelectListInput(
+            'use bar lines', ['yes', 'no']);
+        useBarLinesInput.selectedIndex = this._useBarLines ? 0 : 1;
+
+        useBarLinesInput.addEventListener('change', (event) => {
+            this._useBarLines = useBarLinesInput.selectedIndex == 0;
             this.generateSvg();
         });
 
@@ -461,7 +482,7 @@ export class ImageToNotesInterface {
                         }
                     }
                 } else {
-                    if (placedNote) {
+                    if (placedNote && this._useRests) {
                         const rest = this._rests[noteValue];
                         elements += `<use transform="translate(${x} ${rowY + rest.yOffset * this._lineDistance}) scale(${rest.height * this._lineDistance})" xlink:href="#${rest.name}" />\n`;
                         console.log(`placed rest at row ${r} & column ${column}`)
@@ -469,9 +490,11 @@ export class ImageToNotesInterface {
                 }
 
                 if (placedNote && barLinePlaces.includes(column)) {
-                    const barLineX = x + this._noteDistance * this._lineDistance * 0.5;
-                    elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                     placedNote = false;
+                    if (this._useBarLines) {
+                        const barLineX = x + this._noteDistance * this._lineDistance * 0.5;
+                        elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+                    }
                 }
             }
         }
