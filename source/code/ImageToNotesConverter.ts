@@ -100,6 +100,15 @@ export class ImageToNotesInterface {
             this.generateSvg();
         });
 
+        const lineThicknessInput = controls.createNumberInput(
+            'line thickness', null, this._lineThickness, null, 0, 1, 0.01);
+
+        lineThicknessInput.addEventListener('change', (event) => {
+            const value = (event.target as HTMLInputElement).value;
+            this._lineThickness = parseFloat(value);
+            this.generateSvg();
+        });
+
         const deleteFactorInput = controls.createNumberInput(
             'base keep factor', null, this._baseKeepFactor, null, 0, 1, 0.05);
 
