@@ -315,9 +315,6 @@ export class ImageToNotesInterface {
                 if (!this._useHalfSteps && y % 2 == 1) {
                     continue;
                 }
-                if (Math.random() > this._keepFactor) {
-                    continue;
-                }
                 const imgValue = imgValues[y + x * height];
 
                 const minDiff = Math.abs(minValue - imgValue);
@@ -326,7 +323,6 @@ export class ImageToNotesInterface {
                 let result = maxValue;
                 if (minDiff < maxDiff) {
                     result = minValue;
-                    yPositions.push(y);
                 }
 
                 const error = imgValue - result;
@@ -344,10 +340,18 @@ export class ImageToNotesInterface {
                     }
                 }
 
-                setValue(imgValues, error * (7 / 16), y + 1, x + 0, width, height);
-                setValue(imgValues, error * (3 / 16), y - 1, x + 1, width, height);
-                setValue(imgValues, error * (5 / 16), y + 0, x + 1, width, height);
-                setValue(imgValues, error * (1 / 16), y + 1, x + 1, width, height);
+                setValue(imgValues, error * (7.0 / 16.0), y + 1, x + 0, width, height);
+                setValue(imgValues, error * (3.0 / 16.0), y - 1, x + 1, width, height);
+                setValue(imgValues, error * (5.0 / 16.0), y + 0, x + 1, width, height);
+                setValue(imgValues, error * (1.0 / 16.0), y + 1, x + 1, width, height);
+
+                if (Math.random() > this._keepFactor) {
+                    continue;
+                }
+
+                if (minDiff < maxDiff) {
+                    yPositions.push(y);
+                }
             }
 
             if (yPositions.length > 0) {
