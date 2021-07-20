@@ -232,6 +232,145 @@ export class ImageToNotesInterface {
         }
     }
 
+    getNotesForRow(img: Jimp, y: number): {
+        values: number[],
+        xPositions: number[],
+        yPositionsList: number[][]
+    }[] {
+
+        const rowImage = new Jimp(img);
+        this.weightedGray(rowImage);
+        rowImage.crop(0, y * 2, img.getWidth(), this._notePlacesPerRow);
+
+        const width = rowImage.getWidth();
+        const height = rowImage.getHeight();
+
+        const imgValues: number[] = [];
+        const preferedValues: number[] = [];
+        for (let x = 0; x < width; x++) {
+            let sum = 0.0;
+            for (let y = 0; y < height; y++) {
+                const pixel = rowImage.getPixelColor(x, y);
+                const color = Jimp.intToRGBA(pixel);
+                const value = color.r / 255.0;
+                imgValues[y + x * height] = value;
+                sum += value;
+            }
+            preferedValues[x] = (sum / height) < 0.5 ? 2 : 0;
+        }
+
+        const notePatterns = [
+            [0],
+            [2, 1, 2],
+            [2, 2, 1],
+            [3, 3, 2, 1],
+            [2, 2, 2, 2],
+        ];
+
+        const partialPatternMatch = (a1: Array<number>, a2: Array<number>) => {
+            if (a1.length < a2.length) {
+                return false;
+            }
+            for (let i = 0; i < a2.length; i++) {
+                if ((a1[i] < 2) != (a2[i] < 2)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        const patternMatch = (a1: Array<number>, a2: Array<number>) => {
+            if (a1.length != a2.length) {
+                return false;
+            }
+            for (let i = 0; i < a1.length; i++) {
+                if ((a1[i] < 2) != (a2[i] < 2)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        const bars = [];
+
+        let values: number[] = [];
+        let xPositions: number[] = [];
+        let yPositionsList: number[][] = [];
+
+        for (let x = 0; x < rowImage.getWidth(); x++) {
+            const preferedValue = preferedValues[x];
+
+            const resultingPattern = values.concat(preferedValue);
+            const matchingPattern = notePatterns.find(
+                element => partialPatternMatch(element, resultingPattern)
+            );
+
+            const value = matchingPattern ? preferedValue : 2;
+            const minValue = value == 0 ? 0.5 : 0.0;
+            const maxValue = 1.0;
+
+            const yPositions: number[] = [];
+            for (let y = 0; y < height; y++) {
+                if (!this._useHalfSteps && y % 2 == 1) {
+                    continue;
+                }
+                const imgValue = imgValues[y + x * height];
+
+                const minDiff = Math.abs(minValue - imgValue);
+                const maxDiff = Math.abs(maxValue - imgValue);
+
+                let result = maxValue;
+                if (minDiff < maxDiff) { // && Math.random() > this._keepFactor) { // TODO use random delete
+                    result = minValue;
+                    yPositions.push(y);
+                }
+
+                const error = imgValue - result;
+
+                const setValue = (
+                    array: number[],
+                    value: number,
+                    x: number,
+                    y: number,
+                    width: number,
+                    height: number
+                ) => {
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        array[y + x * height] += value;
+                    }
+                }
+
+                setValue(imgValues, error * (7 / 16), y + 1, x + 0, width, height);
+                setValue(imgValues, error * (3 / 16), y - 1, x + 1, width, height);
+                setValue(imgValues, error * (5 / 16), y + 0, x + 1, width, height);
+                setValue(imgValues, error * (1 / 16), y + 1, x + 1, width, height);
+            }
+
+            if (yPositions.length > 0) {
+                values.push(value);
+                xPositions.push(x);
+                yPositionsList.push(yPositions);
+
+                const matchingPattern = notePatterns.find(
+                    element => patternMatch(element, values)
+                );
+
+                if (matchingPattern) {
+                    bars.push({
+                        values: matchingPattern,
+                        xPositions,
+                        yPositionsList
+                    });
+                    values = [];
+                    xPositions = [];
+                    yPositionsList = [];
+                }
+            }
+        }
+
+        return bars;
+    }
+
     ditherRow(img: Jimp, y: number): { rowImage: Jimp, averageImage: Jimp } {
         const rowImage = new Jimp(img);
         this.weightedGray(rowImage);
@@ -369,9 +508,10 @@ export class ImageToNotesInterface {
             const x2 = this._width - this._padding;
             const rowY = r * rowStep + this._padding;
 
-            const ditherResult = this.ditherRow(img, rowY / this._lineDistance);
-            const rowImage = ditherResult.rowImage;
-            const averageImage = ditherResult.averageImage;
+            // const ditherResult = this.ditherRow(img, rowY / this._lineDistance);
+            const bars = this.getNotesForRow(img, rowY / this._lineDistance);
+            // const rowImage = ditherResult.rowImage;
+            // const averageImage = ditherResult.averageImage;
 
             elements += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             elements += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
@@ -384,90 +524,46 @@ export class ImageToNotesInterface {
                 elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             }
 
-            const notePatterns = [
-                [0],
-                [2, 1, 2],
-                [2, 2, 1],
-                [3, 3, 2, 1],
-                [2, 2, 2, 2],
-            ];
+            // console.log(bars)
 
-            const patternMatch = (a1: Array<number>, a2: Array<number>) => {
-                if (a1.length != a2.length) {
-                    return false;
+            for (let bar of bars) {
+                const values = bar.values;
+                const xPositions = bar.xPositions;
+                const yPositionsList = bar.yPositionsList;
+                const lastColumn = xPositions[xPositions.length - 1];
+                // console.log(column);
+                console.log(values)
+                console.log(yPositionsList)
+
+                if (this._useBarLines) {
+                    const barLineX = this._padding + this._lineDistance * (lastColumn * this._noteDistance + this._clefWidth) + this._noteDistance * this._lineDistance * 0.5;
+                    elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                 }
-                for (let i = 0; i < a1.length; i++) {
-                    if ((a1[i] < 2) != (a2[i] < 2)) {
-                        return false;
-                    }
-                }
-                return true;
-            }
 
-            let noteValues: Array<number> = [];
-            let lastNotes: Array<number> = [];
-            let barLinePlaces = [];
-            for (let column = 0; column < averageImage.getWidth(); column++) {
-                const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
-                const px = x / (this._lineDistance * this._noteDistance);
-                const py = 0;
-                const pixel = Jimp.intToRGBA(averageImage.getPixelColor(px, py));
-                const pixelValue = (pixel.r / 255.0);
-                let value = 0;
-                if (pixelValue < 0.5) {
-                    value = 2;
-                }
-                lastNotes.push(value);
-                const matchingPattern = notePatterns.find(element => patternMatch(element, lastNotes));
+                for (let column = 0; column < values.length; column++) {
+                    const value = values[column];
+                    const xPosition = xPositions[column];
+                    const yPositions = yPositionsList[column];
 
-                if (matchingPattern) {
-                    lastNotes = [];
-                    barLinePlaces.push(column);
-                    noteValues = noteValues.concat(matchingPattern);
-                }
-            }
+                    const x = this._padding + this._lineDistance * (xPosition * this._noteDistance + this._clefWidth);
 
-            // draw notes & bar lines
-            let placedNote = false;
-            for (let column = 0; column < rowImage.getWidth(); column++) {
-                const x = this._padding + this._lineDistance * (column * this._noteDistance + this._clefWidth);
-
-                const noteValue = noteValues[column];
-
-                let minPos = this._notePlacesPerRow - 1;
-                let maxPos = 0;
-                // draw notes
-                for (let line = 0; line < this._notePlacesPerRow; line++) {
-                    if (Math.random() > this._keepFactor) {
-                        continue;
-                    }
-                    if (!this._useHalfSteps && line % 2 != 0) {
-                        continue;
-                    }
-                    const y = rowY + line * this._lineDistance * 0.5;
-
-                    if (x >= x2) {
-                        break;
-                    }
-                    const px = x / (this._lineDistance * this._noteDistance);
-                    const py = line;
-                    const pixel = Jimp.intToRGBA(rowImage.getPixelColor(px, py));
-                    const value = (pixel.r / 255.0) * 2;
-                    if (value < 2.0) {
-                        minPos = Math.min(minPos, line);
-                        maxPos = Math.max(maxPos, line);
-                        if (noteValue < 2) {
+                    // draw note bodies
+                    for (const yPosition of yPositions) {
+                        if (!this._useHalfSteps && yPosition % 2 == 1) {
+                            continue;
+                        }
+                        const y = rowY + yPosition * this._lineDistance * 0.5;
+                        if (value < 2) {
                             elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
                         } else {
                             elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
                         }
                     }
-                }
 
-                // draw note stem
-                if (maxPos >= minPos) {
-                    placedNote = true;
-                    if (noteValue > 0) {
+                    // draw note lines
+                    if (value > 0) {
+                        let minPos = yPositions[0];
+                        let maxPos = yPositions[yPositions.length - 1];
                         let noteLineX = x;
                         const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
                         const lineDown = minPos < this._notePlacesPerRow - 1 - maxPos;
@@ -486,26 +582,135 @@ export class ImageToNotesInterface {
 
                         elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
 
-                        if (noteValue == 3) {
+                        if (value == 3) {
                             elements += `<use transform="translate(${noteLineX} ${lineDown ? noteLineEnd : noteLineStart}) scale(${this._lineDistance * 2.5}) scale(1 ${lineDown ? -1 : 1})" xlink:href="#flag" />\n`;
                         }
                     }
-                } else {
-                    if (placedNote && this._useRests) {
-                        const rest = this._rests[noteValue];
-                        elements += `<use transform="translate(${x} ${rowY + rest.yOffset * this._lineDistance}) scale(${rest.height * this._lineDistance})" xlink:href="#${rest.name}" />\n`;
-                        console.log(`placed rest at row ${r} & column ${column}`)
-                    }
-                }
-
-                if (placedNote && barLinePlaces.includes(column)) {
-                    placedNote = false;
-                    if (this._useBarLines) {
-                        const barLineX = x + this._noteDistance * this._lineDistance * 0.5;
-                        elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
-                    }
                 }
             }
+
+            // const notePatterns = [
+            //     [0],
+            //     [2, 1, 2],
+            //     [2, 2, 1],
+            //     [3, 3, 2, 1],
+            //     [2, 2, 2, 2],
+            // ];
+
+            // const patternMatch = (a1: Array<number>, a2: Array<number>) => {
+            //     if (a1.length != a2.length) {
+            //         return false;
+            //     }
+            //     for (let i = 0; i < a1.length; i++) {
+            //         if ((a1[i] < 2) != (a2[i] < 2)) {
+            //             return false;
+            //         }
+            //     }
+            //     return true;
+            // }
+
+            // let noteValues: Array<number> = [];
+            // let lastNotes: Array<number> = [];
+            // let barLinePlaces = [];
+            // for (let column = 0; column < averageImage.getWidth(); column++) {
+            //     const x = this._padding + column * this._lineDistance * this._noteDistance + this._clefWidth * this._lineDistance;
+            //     const px = x / (this._lineDistance * this._noteDistance);
+            //     const py = 0;
+            //     const pixel = Jimp.intToRGBA(averageImage.getPixelColor(px, py));
+            //     const pixelValue = (pixel.r / 255.0);
+            //     let value = 0;
+            //     if (pixelValue < 0.5) {
+            //         value = 2;
+            //     }
+            //     lastNotes.push(value);
+            //     const matchingPattern = notePatterns.find(element => patternMatch(element, lastNotes));
+
+            //     if (matchingPattern) {
+            //         lastNotes = [];
+            //         barLinePlaces.push(column);
+            //         noteValues = noteValues.concat(matchingPattern);
+            //     }
+            // }
+
+            // draw notes & bar lines
+            // let placedNote = false;
+            // for (let column = 0; column < rowImage.getWidth(); column++) {
+            //     const x = this._padding + this._lineDistance * (column * this._noteDistance + this._clefWidth);
+
+            //     const noteValue = noteValues[column];
+
+            //     let minPos = this._notePlacesPerRow - 1;
+            //     let maxPos = 0;
+            //     // draw notes
+            //     for (let line = 0; line < this._notePlacesPerRow; line++) {
+            //         if (Math.random() > this._keepFactor) {
+            //             continue;
+            //         }
+            //         if (!this._useHalfSteps && line % 2 != 0) {
+            //             continue;
+            //         }
+            //         const y = rowY + line * this._lineDistance * 0.5;
+
+            //         if (x >= x2) {
+            //             break;
+            //         }
+            //         const px = x / (this._lineDistance * this._noteDistance);
+            //         const py = line;
+            //         const pixel = Jimp.intToRGBA(rowImage.getPixelColor(px, py));
+            //         const value = (pixel.r / 255.0) * 2;
+            //         if (value < 2.0) {
+            //             minPos = Math.min(minPos, line);
+            //             maxPos = Math.max(maxPos, line);
+            //             if (noteValue < 2) {
+            //                 elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#wholeNote" />\n`;
+            //             } else {
+            //                 elements += `<use x="0" y="0" transform="translate(${x} ${y}) scale(${this._lineDistance})" xlink:href="#quarterNote" />\n`;
+            //             }
+            //         }
+            //     }
+
+            //     // draw note stem
+            //     if (maxPos >= minPos) {
+            //         placedNote = true;
+            //         if (noteValue > 0) {
+            //             let noteLineX = x;
+            //             const noteLineXOffset = this._noteWidth * this._lineDistance * 0.5;
+            //             const lineDown = minPos < this._notePlacesPerRow - 1 - maxPos;
+            //             if (lineDown) {
+            //                 maxPos += 6;
+            //                 maxPos = Math.min(maxPos, this._notePlacesPerRow + 1);
+            //                 noteLineX -= noteLineXOffset;
+            //             } else {
+            //                 minPos -= 6;
+            //                 minPos = Math.max(minPos, -2);
+            //                 noteLineX += noteLineXOffset;
+            //             }
+
+            //             let noteLineStart = rowY + minPos * this._lineDistance * 0.5;
+            //             let noteLineEnd = rowY + maxPos * this._lineDistance * 0.5;
+
+            //             elements += `<line x1="${noteLineX}" y1="${noteLineStart}" x2="${noteLineX}" y2="${noteLineEnd}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+
+            //             if (noteValue == 3) {
+            //                 elements += `<use transform="translate(${noteLineX} ${lineDown ? noteLineEnd : noteLineStart}) scale(${this._lineDistance * 2.5}) scale(1 ${lineDown ? -1 : 1})" xlink:href="#flag" />\n`;
+            //             }
+            //         }
+            //     } else {
+            //         if (placedNote && this._useRests) {
+            //             const rest = this._rests[noteValue];
+            //             elements += `<use transform="translate(${x} ${rowY + rest.yOffset * this._lineDistance}) scale(${rest.height * this._lineDistance})" xlink:href="#${rest.name}" />\n`;
+            //             console.log(`placed rest at row ${r} & column ${column}`)
+            //         }
+            //     }
+
+            //     if (placedNote && barLinePlaces.includes(column)) {
+            //         placedNote = false;
+            //         if (this._useBarLines) {
+            //             const barLineX = x + this._noteDistance * this._lineDistance * 0.5;
+            //             elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
+            //         }
+            //     }
+            // }
         }
 
         this._svg = svgStart + defs + elements + svgEnd;
