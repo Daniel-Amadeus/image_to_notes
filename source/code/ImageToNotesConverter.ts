@@ -115,6 +115,7 @@ export class ImageToNotesInterface {
         deleteFactorInput.addEventListener('change', (event) => {
             const value = (event.target as HTMLInputElement).value;
             this._baseKeepFactor = parseFloat(value);
+            this._keepFactor = this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
             this.generateSvg();
         });
 
@@ -314,13 +315,16 @@ export class ImageToNotesInterface {
                 if (!this._useHalfSteps && y % 2 == 1) {
                     continue;
                 }
+                if (Math.random() > this._keepFactor) {
+                    continue;
+                }
                 const imgValue = imgValues[y + x * height];
 
                 const minDiff = Math.abs(minValue - imgValue);
                 const maxDiff = Math.abs(maxValue - imgValue);
 
                 let result = maxValue;
-                if (minDiff < maxDiff) { // && Math.random() > this._keepFactor) { // TODO use random delete
+                if (minDiff < maxDiff) {
                     result = minValue;
                     yPositions.push(y);
                 }
@@ -532,8 +536,8 @@ export class ImageToNotesInterface {
                 const yPositionsList = bar.yPositionsList;
                 const lastColumn = xPositions[xPositions.length - 1];
                 // console.log(column);
-                console.log(values)
-                console.log(yPositionsList)
+                // console.log(values)
+                // console.log(yPositionsList)
 
                 if (this._useBarLines) {
                     const barLineX = this._padding + this._lineDistance * (lastColumn * this._noteDistance + this._clefWidth) + this._noteDistance * this._lineDistance * 0.5;
