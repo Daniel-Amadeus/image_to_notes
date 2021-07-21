@@ -25,7 +25,7 @@ export class ImageToNotesInterface {
     protected _useHalfSteps = true;
 
     protected _baseKeepFactor = 1.0;
-    protected _halfKeepFactorWithHalfSteps = true;
+    protected _halfKeepFactorWithHalfSteps = false;
     protected _keepFactor =
         this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
 
@@ -233,6 +233,30 @@ export class ImageToNotesInterface {
         }
     }
 
+    partialPatternMatch(a1: Array<number>, a2: Array<number>): boolean {
+        if (a1.length < a2.length) {
+            return false;
+        }
+        for (let i = 0; i < a2.length; i++) {
+            if ((a1[i] < 2) != (a2[i] < 2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    patternMatch(a1: Array<number>, a2: Array<number>): boolean {
+        if (a1.length != a2.length) {
+            return false;
+        }
+        for (let i = 0; i < a1.length; i++) {
+            if ((a1[i] < 2) != (a2[i] < 2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     getNotesForRow(img: Jimp, y: number): {
         values: number[],
         xPositions: number[],
@@ -247,7 +271,7 @@ export class ImageToNotesInterface {
         const height = rowImage.getHeight();
 
         const imgValues: number[] = [];
-        const preferedValues: number[] = [];
+        const preferredValues: number[] = [];
         for (let x = 0; x < width; x++) {
             let sum = 0.0;
             for (let y = 0; y < height; y++) {
@@ -257,7 +281,7 @@ export class ImageToNotesInterface {
                 imgValues[y + x * height] = value;
                 sum += value;
             }
-            preferedValues[x] = (sum / height) < 0.5 ? 2 : 0;
+            preferredValues[x] = (sum / height) < 0.5 ? 2 : 0;
         }
 
         const notePatterns = [
@@ -268,30 +292,6 @@ export class ImageToNotesInterface {
             [2, 2, 2, 2],
         ];
 
-        const partialPatternMatch = (a1: Array<number>, a2: Array<number>) => {
-            if (a1.length < a2.length) {
-                return false;
-            }
-            for (let i = 0; i < a2.length; i++) {
-                if ((a1[i] < 2) != (a2[i] < 2)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        const patternMatch = (a1: Array<number>, a2: Array<number>) => {
-            if (a1.length != a2.length) {
-                return false;
-            }
-            for (let i = 0; i < a1.length; i++) {
-                if ((a1[i] < 2) != (a2[i] < 2)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
         const bars = [];
 
         let values: number[] = [];
@@ -299,11 +299,11 @@ export class ImageToNotesInterface {
         let yPositionsList: number[][] = [];
 
         for (let x = 0; x < rowImage.getWidth(); x++) {
-            const preferedValue = preferedValues[x];
+            const preferedValue = preferredValues[x];
 
             const resultingPattern = values.concat(preferedValue);
             const matchingPattern = notePatterns.find(
-                element => partialPatternMatch(element, resultingPattern)
+                element => this.partialPatternMatch(element, resultingPattern)
             );
 
             const value = matchingPattern ? preferedValue : 2;
@@ -360,7 +360,7 @@ export class ImageToNotesInterface {
                 yPositionsList.push(yPositions);
 
                 const matchingPattern = notePatterns.find(
-                    element => patternMatch(element, values)
+                    element => this.patternMatch(element, values)
                 );
 
                 if (matchingPattern) {
