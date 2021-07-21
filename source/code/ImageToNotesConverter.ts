@@ -312,14 +312,14 @@ export class ImageToNotesInterface {
         let yPositionsList: number[][] = [];
 
         for (let x = 0; x < rowImage.getWidth(); x++) {
-            const preferedValue = preferredValues[x];
+            const preferredValue = preferredValues[x];
 
-            const resultingPattern = values.concat(preferedValue);
+            const resultingPattern = values.concat(preferredValue);
             const matchingPattern = notePatterns.find(
                 element => this.partialPatternMatch(element, resultingPattern)
             );
 
-            const value = matchingPattern ? preferedValue : 2;
+            const value = matchingPattern ? preferredValue : 2;
             const minValue = value == 0 ? 0.5 : 0.0;
             const maxValue = 1.0;
 
