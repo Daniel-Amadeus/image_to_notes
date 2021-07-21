@@ -275,7 +275,6 @@ export class ImageToNotesInterface {
         xPositions: number[],
         yPositionsList: number[][]
     }[] {
-
         const rowImage = new Jimp(img);
         this.weightedGray(rowImage);
         rowImage.crop(0, y * 2, img.getWidth(), this._notePlacesPerRow);
@@ -341,16 +340,16 @@ export class ImageToNotesInterface {
                 const error = imgValue - result;
 
                 this.setValue(
-                    imgValues, error * (7.0 / 16.0), y + 1, x + 0, width, height
+                    imgValues, error * (7.0 / 16.0), x + 0, y + 1, width, height
                 );
                 this.setValue(
-                    imgValues, error * (3.0 / 16.0), y - 1, x + 1, width, height
+                    imgValues, error * (3.0 / 16.0), x + 1, y - 1, width, height
                 );
                 this.setValue(
-                    imgValues, error * (5.0 / 16.0), y + 0, x + 1, width, height
+                    imgValues, error * (5.0 / 16.0), x + 1, y + 0, width, height
                 );
                 this.setValue(
-                    imgValues, error * (1.0 / 16.0), y + 1, x + 1, width, height
+                    imgValues, error * (1.0 / 16.0), x + 1, y + 1, width, height
                 );
 
                 if (Math.random() > this._keepFactor) {
