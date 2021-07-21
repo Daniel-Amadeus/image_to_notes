@@ -257,6 +257,19 @@ export class ImageToNotesInterface {
         return true;
     }
 
+    setValue(
+        array: number[],
+        value: number,
+        x: number,
+        y: number,
+        width: number,
+        height: number
+    ): void {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+            array[y + x * height] += value;
+        }
+    }
+
     getNotesForRow(img: Jimp, y: number): {
         values: number[],
         xPositions: number[],
@@ -327,23 +340,18 @@ export class ImageToNotesInterface {
 
                 const error = imgValue - result;
 
-                const setValue = (
-                    array: number[],
-                    value: number,
-                    x: number,
-                    y: number,
-                    width: number,
-                    height: number
-                ) => {
-                    if (x >= 0 && x < width && y >= 0 && y < height) {
-                        array[y + x * height] += value;
-                    }
-                }
-
-                setValue(imgValues, error * (7.0 / 16.0), y + 1, x + 0, width, height);
-                setValue(imgValues, error * (3.0 / 16.0), y - 1, x + 1, width, height);
-                setValue(imgValues, error * (5.0 / 16.0), y + 0, x + 1, width, height);
-                setValue(imgValues, error * (1.0 / 16.0), y + 1, x + 1, width, height);
+                this.setValue(
+                    imgValues, error * (7.0 / 16.0), y + 1, x + 0, width, height
+                );
+                this.setValue(
+                    imgValues, error * (3.0 / 16.0), y - 1, x + 1, width, height
+                );
+                this.setValue(
+                    imgValues, error * (5.0 / 16.0), y + 0, x + 1, width, height
+                );
+                this.setValue(
+                    imgValues, error * (1.0 / 16.0), y + 1, x + 1, width, height
+                );
 
                 if (Math.random() > this._keepFactor) {
                     continue;
