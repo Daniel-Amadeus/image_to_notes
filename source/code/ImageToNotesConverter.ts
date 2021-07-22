@@ -139,14 +139,14 @@ export class ImageToNotesInterface {
             this.generateSvg();
         });
 
-        const useRestsInput = controls.createSelectListInput(
-            'use rests', ['yes', 'no']);
-        useRestsInput.selectedIndex = this._useRests ? 0 : 1;
+        // const useRestsInput = controls.createSelectListInput(
+        //     'use rests', ['yes', 'no']);
+        // useRestsInput.selectedIndex = this._useRests ? 0 : 1;
 
-        useRestsInput.addEventListener('change', (event) => {
-            this._useRests = useRestsInput.selectedIndex == 0;
-            this.generateSvg();
-        });
+        // useRestsInput.addEventListener('change', (event) => {
+        //     this._useRests = useRestsInput.selectedIndex == 0;
+        //     this.generateSvg();
+        // });
 
         const useBarLinesInput = controls.createSelectListInput(
             'use bar lines', ['yes', 'no']);
