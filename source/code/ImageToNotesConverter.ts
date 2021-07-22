@@ -12,7 +12,7 @@ export class ImageToNotesInterface {
 
     protected _padding = 3;
 
-    protected _lineDistance = 1.5;
+    protected _lineDistance = 1.0;
     protected _lineThickness = 0.25;
 
     protected _linesPerRow = 5;
@@ -25,7 +25,7 @@ export class ImageToNotesInterface {
     protected _useHalfSteps = true;
 
     protected _baseKeepFactor = 1.0;
-    protected _halfKeepFactorWithHalfSteps = false;
+    protected _halfKeepFactorWithHalfSteps = true;
     protected _keepFactor =
         this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
 
@@ -139,14 +139,14 @@ export class ImageToNotesInterface {
             this.generateSvg();
         });
 
-        const useRestsInput = controls.createSelectListInput(
-            'use rests', ['yes', 'no']);
-        useRestsInput.selectedIndex = this._useRests ? 0 : 1;
+        // const useRestsInput = controls.createSelectListInput(
+        //     'use rests', ['yes', 'no']);
+        // useRestsInput.selectedIndex = this._useRests ? 0 : 1;
 
-        useRestsInput.addEventListener('change', (event) => {
-            this._useRests = useRestsInput.selectedIndex == 0;
-            this.generateSvg();
-        });
+        // useRestsInput.addEventListener('change', (event) => {
+        //     this._useRests = useRestsInput.selectedIndex == 0;
+        //     this.generateSvg();
+        // });
 
         const useBarLinesInput = controls.createSelectListInput(
             'use bar lines', ['yes', 'no']);
@@ -275,12 +275,13 @@ export class ImageToNotesInterface {
         xPositions: number[],
         yPositionsList: number[][]
     }[] {
+        const width = img.getWidth();
+        const height = this._notePlacesPerRow;
+
         const rowImage = new Jimp(img);
         this.weightedGray(rowImage);
-        rowImage.crop(0, y * 2, img.getWidth(), this._notePlacesPerRow);
+        rowImage.crop(0, y * 2, width, height);
 
-        const width = rowImage.getWidth();
-        const height = rowImage.getHeight();
 
         const imgValues: number[] = [];
         const preferredValues: number[] = [];
@@ -392,7 +393,8 @@ export class ImageToNotesInterface {
         const rowHeight = this._lineDistance * (this._linesPerRow - 1);
         const rowGap = this._lineDistance * (this._rowDistance + 1);
         const rowStep = rowHeight + rowGap;
-        const rowCount = (this._height - 2 * this._padding) / rowStep;
+        const rowCount = Math.floor(
+            (this._height - 2 * this._padding) / rowStep);
 
         const svgStart = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${this._width}mm" height="${this._height}mm" viewBox="0 0 ${this._width} ${this._height}">
@@ -409,7 +411,7 @@ export class ImageToNotesInterface {
 
         for (let i = 0; i < this._rests.length; i++) {
             const rest = this._rests[i];
-            defs += `<path id="${rest.name}" fill="black" stroke="none" d="${rest.path}" />\n`
+            defs += `    <path id="${rest.name}" fill="black" stroke="none" d="${rest.path}" />\n`
         }
         defs += '</defs>';
 
