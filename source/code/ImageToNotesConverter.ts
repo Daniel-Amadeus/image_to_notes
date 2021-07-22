@@ -435,22 +435,29 @@ export class ImageToNotesInterface {
 
             const bars = this.getNotesForRow(img, rowY / this._lineDistance);
 
+            elements += '<g>\n';
+
+
+            elements += '<g>\n';
             elements += `<line x1="${x1}" y1="${rowY}" x2="${x1}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             elements += `<line x1="${x2}" y1="${rowY}" x2="${x2}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
-
-            elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
             // draw horizontal lines
             for (let line = 0; line < this._linesPerRow; line++) {
                 const y = rowY + line * this._lineDistance;
                 elements += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
             }
+            elements += '</g>\n';
+
+            elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
             for (let bar of bars) {
                 const values = bar.values;
                 const xPositions = bar.xPositions;
                 const yPositionsList = bar.yPositionsList;
                 const lastColumn = xPositions[xPositions.length - 1];
+
+                elements += '<g>\n';
 
                 if (this._useBarLines) {
                     const barLineX = this._padding + this._lineDistance * (lastColumn * this._noteDistance + this._clefWidth) + this._noteDistance * this._lineDistance * 0.5;
@@ -463,6 +470,8 @@ export class ImageToNotesInterface {
                     const yPositions = yPositionsList[column];
 
                     const x = this._padding + this._lineDistance * (xPosition * this._noteDistance + this._clefWidth);
+
+                    elements += '<g>\n';
 
                     // draw note bodies
                     for (const yPosition of yPositions) {
@@ -503,8 +512,12 @@ export class ImageToNotesInterface {
                             elements += `<use transform="translate(${noteLineX} ${lineDown ? noteLineEnd : noteLineStart}) scale(${this._lineDistance * 2.5}) scale(1 ${lineDown ? -1 : 1})" xlink:href="#flag" />\n`;
                         }
                     }
+
+                    elements += '</g>\n';
                 }
+                elements += '</g>\n'
             }
+            elements += '</g>\n';
         }
 
         this._svg = svgStart + defs + elements + svgEnd;
