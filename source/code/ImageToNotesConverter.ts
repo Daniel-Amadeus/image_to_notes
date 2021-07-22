@@ -12,7 +12,7 @@ export class ImageToNotesInterface {
 
     protected _padding = 3;
 
-    protected _lineDistance = 1.5;
+    protected _lineDistance = 1.0;
     protected _lineThickness = 0.25;
 
     protected _linesPerRow = 5;
@@ -25,7 +25,7 @@ export class ImageToNotesInterface {
     protected _useHalfSteps = true;
 
     protected _baseKeepFactor = 1.0;
-    protected _halfKeepFactorWithHalfSteps = false;
+    protected _halfKeepFactorWithHalfSteps = true;
     protected _keepFactor =
         this._baseKeepFactor * ((this._halfKeepFactorWithHalfSteps && this._useHalfSteps) ? 0.5 : 1.0);
 
@@ -410,7 +410,7 @@ export class ImageToNotesInterface {
 
         for (let i = 0; i < this._rests.length; i++) {
             const rest = this._rests[i];
-            defs += `<path id="${rest.name}" fill="black" stroke="none" d="${rest.path}" />\n`
+            defs += `    <path id="${rest.name}" fill="black" stroke="none" d="${rest.path}" />\n`
         }
         defs += '</defs>';
 
