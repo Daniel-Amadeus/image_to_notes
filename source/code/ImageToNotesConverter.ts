@@ -275,12 +275,13 @@ export class ImageToNotesInterface {
         xPositions: number[],
         yPositionsList: number[][]
     }[] {
+        const width = img.getWidth();
+        const height = this._notePlacesPerRow;
+
         const rowImage = new Jimp(img);
         this.weightedGray(rowImage);
-        rowImage.crop(0, y * 2, img.getWidth(), this._notePlacesPerRow);
+        rowImage.crop(0, y * 2, width, height);
 
-        const width = rowImage.getWidth();
-        const height = rowImage.getHeight();
 
         const imgValues: number[] = [];
         const preferredValues: number[] = [];
