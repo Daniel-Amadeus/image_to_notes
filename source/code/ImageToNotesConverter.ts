@@ -392,7 +392,8 @@ export class ImageToNotesInterface {
         const rowHeight = this._lineDistance * (this._linesPerRow - 1);
         const rowGap = this._lineDistance * (this._rowDistance + 1);
         const rowStep = rowHeight + rowGap;
-        const rowCount = (this._height - 2 * this._padding) / rowStep;
+        const rowCount = Math.floor(
+            (this._height - 2 * this._padding) / rowStep);
 
         const svgStart = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${this._width}mm" height="${this._height}mm" viewBox="0 0 ${this._width} ${this._height}">
