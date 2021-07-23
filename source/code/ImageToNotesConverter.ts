@@ -13,7 +13,7 @@ export class ImageToNotesInterface {
     protected _padding = 3;
 
     protected _lineDistance = 1.0;
-    protected _lineThickness = 0.25;
+    protected _lineThickness = 0.1;
 
     protected _linesPerRow = 5;
     protected _notePlacesPerRow = (this._linesPerRow * 2) - 1;
