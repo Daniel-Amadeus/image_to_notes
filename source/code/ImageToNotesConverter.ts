@@ -422,8 +422,8 @@ export class ImageToNotesInterface {
         const img = new Jimp(this._originalImage);
 
         img.cover(
-            (this._width * 2.0) / this._lineDistance,
-            (this._height * 2.0) / this._lineDistance,
+            ((this._width - 2.0 * this._padding - this._lineDistance * this._clefWidth) * 2.0) / this._lineDistance,
+            ((this._height - 2.0 * this._padding) * 2.0) / this._lineDistance,
             undefined, Jimp.RESIZE_BICUBIC
         );
         img.resize(
