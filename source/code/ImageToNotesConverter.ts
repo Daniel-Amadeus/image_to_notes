@@ -157,6 +157,8 @@ export class ImageToNotesInterface {
             this.generateSvg();
         });
 
+        this.loadImage(require('../img/aurelien.png'));
+
     }
 
     loadImage(path: string): void {
