@@ -455,16 +455,16 @@ export class ImageToNotesInterface {
 
             elements += `<use transform="translate(${this._padding + 0.5 * this._lineDistance} ${rowY})" xlink:href="#clef" />\n`;
 
-            for (let bar of bars) {
+            bars.forEach((bar, barIndex) => {
                 const values = bar.values;
                 const xPositions = bar.xPositions;
                 const yPositionsList = bar.yPositionsList;
-                const lastColumn = xPositions[xPositions.length - 1];
+                const firstColumn = xPositions[0];
 
                 elements += '<g>\n';
 
-                if (this._useBarLines) {
-                    const barLineX = this._padding + this._lineDistance * (lastColumn * this._noteDistance + this._clefWidth) + this._noteDistance * this._lineDistance * 0.5;
+                if (this._useBarLines && barIndex != 0) {
+                    const barLineX = this._padding + this._lineDistance * ((firstColumn - 1) * this._noteDistance + this._clefWidth) + this._noteDistance * this._lineDistance * 0.5;
                     elements += `<line x1="${barLineX}" y1="${rowY}" x2="${barLineX}" y2="${rowY + rowHeight}" stroke-width="${this._lineThickness}" stroke="black" stroke-linecap="square" />\n`;
                 }
 
@@ -520,7 +520,8 @@ export class ImageToNotesInterface {
                     elements += '</g>\n';
                 }
                 elements += '</g>\n'
-            }
+            })
+
             elements += '</g>\n';
         }
 
